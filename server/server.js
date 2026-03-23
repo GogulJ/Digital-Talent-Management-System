@@ -19,6 +19,9 @@ mongoose
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
+const taskRoutes = require("./routes/taskRoutes");
+app.use("/api/tasks", taskRoutes);
+
 // Protected Route
 const authMiddleware = require("./middleware/authMiddleware");
 app.get("/api/protected", authMiddleware, (req, res) => {
