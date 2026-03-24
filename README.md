@@ -62,6 +62,22 @@ npm run dev
 
 ---
 
+## ✅ Sprint 2 – Task Management CRUD (COMPLETED)
+
+### Day 1: Task Model & Create API
+- Created `Task` model with Mongoose (title, description, status, priority, assignedTo, createdBy, dueDate fields)
+- Implemented `taskController.js` with `createTask` function
+- Set up `taskRoutes.js` with `POST /api/tasks`
+- All task routes protected with `authMiddleware`
+
+### Day 2: Full CRUD APIs
+- `GET /api/tasks` — fetch all tasks with populated assignedTo & createdBy (sorted by newest)
+- `GET /api/tasks/:id` — fetch a single task by ID with population
+- `PUT /api/tasks/:id` — update task with validation (`runValidators: true`) + 404 handling
+- `DELETE /api/tasks/:id` — delete task with 404 check + proper error responses
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -78,13 +94,16 @@ Digital-Talent-System/
 │   └── .env                   # VITE_API_URL
 └── server/                    # Node/Express backend
     ├── controllers/
-    │   └── authController.js  # register + login logic
+    │   ├── authController.js  # register + login logic
+    │   └── taskController.js  # Task CRUD logic
     ├── middleware/
     │   └── authMiddleware.js  # JWT verification middleware
     ├── models/
-    │   └── User.js            # Mongoose User schema
+    │   ├── User.js            # Mongoose User schema
+    │   └── Task.js            # Mongoose Task schema
     ├── routes/
-    │   └── authRoutes.js      # /api/auth routes
+    │   ├── authRoutes.js      # /api/auth routes
+    │   └── taskRoutes.js      # /api/tasks routes (protected)
     ├── server.js              # Express app entry point
     └── .env                   # MONGO_URI, JWT_SECRET, PORT
 ```
@@ -93,8 +112,18 @@ Digital-Talent-System/
 
 ## 🔐 API Endpoints
 
+### Auth Routes
 | Method | Endpoint | Auth Required | Description |
 |--------|----------|--------------|-------------|
 | POST | `/api/auth/register` | No | Register a new user |
 | POST | `/api/auth/login` | No | Login and receive JWT |
 | GET | `/api/protected` | Yes (JWT) | Test protected access |
+
+### Task Routes
+| Method | Endpoint | Auth Required | Description |
+|--------|----------|--------------|-------------|
+| POST | `/api/tasks` | Yes (JWT) | Create a new task |
+| GET | `/api/tasks` | Yes (JWT) | Get all tasks (populated) |
+| GET | `/api/tasks/:id` | Yes (JWT) | Get a single task by ID |
+| PUT | `/api/tasks/:id` | Yes (JWT) | Update a task |
+| DELETE | `/api/tasks/:id` | Yes (JWT) | Delete a task |
