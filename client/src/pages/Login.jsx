@@ -401,7 +401,7 @@ function Login() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="left-brand-name">Acme</span>
+            <span className="left-brand-name">Talent Management System</span>
           </div>
 
           <div className="left-hero">
@@ -414,7 +414,7 @@ function Login() {
             </p>
           </div>
 
-          <p className="left-footnote">© 2025 Acme Inc. — All rights reserved</p>
+          <p className="left-footnote">© 2025 Talent Management System Inc. — All rights reserved</p>
         </div>
 
         {/* Right panel */}
