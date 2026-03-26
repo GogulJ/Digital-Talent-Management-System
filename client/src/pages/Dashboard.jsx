@@ -58,9 +58,19 @@ export default function Dashboard() {
 
   // ── Delete state ──
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  // ── Filter state ──
+  const [activeFilter, setActiveFilter] = useState("All");
 
   // ── Toast ──
   const [toast, setToast] = useState(null);
+
+  // ── Computed stats ──
+  const total = tasks.length;
+  const completed = tasks.filter(t => t.status === "Completed").length;
+  const pending = tasks.filter(t => t.status === "Pending").length;
+  const inProgress = tasks.filter(t => t.status === "In Progress").length;
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -106,8 +116,12 @@ export default function Dashboard() {
     }
   };
 
-  // ── Delete task ──
-  const handleDelete = async (id) => {
+  // ── Delete task (two-step) ──
+  const requestDelete = (id) => setConfirmDeleteId(id);
+
+  const handleDelete = async () => {
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     setDeletingId(id);
     try {
       await API.delete(`/api/tasks/${id}`);
@@ -119,6 +133,11 @@ export default function Dashboard() {
       setDeletingId(null);
     }
   };
+
+  // ── Filtered tasks ──
+  const filteredTasks = activeFilter === "All"
+    ? tasks
+    : tasks.filter(t => t.status === activeFilter);
 
   // ── Edit task ──
   const startEdit = (task) => {
@@ -296,6 +315,127 @@ export default function Dashboard() {
         .f-submit:disabled { opacity: 0.45; cursor: not-allowed; }
 
         /* ── TASK LIST ── */
+        /* ── STATS GRID ── */
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+          margin-bottom: 28px;
+        }
+        .stat-card {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 14px;
+          padding: 20px 22px;
+          position: relative; overflow: hidden;
+          transition: border-color 0.2s, transform 0.2s;
+        }
+        .stat-card:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); }
+        .stat-card::before {
+          content: '';
+          position: absolute; top: 0; left: 0; right: 0;
+          height: 2px;
+          border-radius: 14px 14px 0 0;
+        }
+        .stat-card.total::before  { background: linear-gradient(90deg, #d4af37, #b8882e); }
+        .stat-card.done::before   { background: linear-gradient(90deg, #34d399, #059669); }
+        .stat-card.pending::before { background: linear-gradient(90deg, #94a3b8, #64748b); }
+        .stat-card.active::before  { background: linear-gradient(90deg, #818cf8, #6366f1); }
+        .stat-icon {
+          width: 34px; height: 34px; border-radius: 9px;
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 14px;
+        }
+        .stat-icon svg { width: 16px; height: 16px; }
+        .stat-card.total  .stat-icon { background: rgba(212,175,55,0.12); stroke: #d4af37; }
+        .stat-card.done   .stat-icon { background: rgba(52,211,153,0.12); stroke: #34d399; }
+        .stat-card.pending .stat-icon { background: rgba(148,163,184,0.1); stroke: #94a3b8; }
+        .stat-card.active  .stat-icon { background: rgba(129,140,248,0.12); stroke: #818cf8; }
+        .stat-num {
+          font-family: 'Playfair Display', serif;
+          font-size: 2rem; font-weight: 500; line-height: 1;
+          margin-bottom: 4px;
+        }
+        .stat-card.total  .stat-num { color: #d4af37; }
+        .stat-card.done   .stat-num { color: #34d399; }
+        .stat-card.pending .stat-num { color: #94a3b8; }
+        .stat-card.active  .stat-num { color: #818cf8; }
+        .stat-label {
+          font-size: 12px; color: #3d4258;
+          font-weight: 500; letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+        .stat-bar {
+          margin-top: 14px;
+          height: 3px; border-radius: 3px;
+          background: rgba(255,255,255,0.05);
+          overflow: hidden;
+        }
+        .stat-bar-fill {
+          height: 100%; border-radius: 3px;
+          transition: width 0.6s cubic-bezier(.4,0,.2,1);
+        }
+        .stat-card.done   .stat-bar-fill { background: #34d399; }
+        .stat-card.pending .stat-bar-fill { background: #94a3b8; }
+        .stat-card.active  .stat-bar-fill { background: #818cf8; }
+
+        /* ── FILTER PILLS ── */
+        .filter-bar {
+          display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px;
+        }
+        .filter-pill {
+          font-size: 11.5px; font-weight: 500; letter-spacing: 0.04em;
+          padding: 4px 12px; border-radius: 20px; cursor: pointer;
+          border: 1px solid rgba(255,255,255,0.07);
+          background: rgba(255,255,255,0.03);
+          color: #3d4258;
+          font-family: 'DM Sans', sans-serif;
+          transition: all 0.18s;
+        }
+        .filter-pill:hover { color: #94a0b8; border-color: rgba(255,255,255,0.12); }
+        .filter-pill.active-pill {
+          background: rgba(212,175,55,0.12);
+          border-color: rgba(212,175,55,0.35);
+          color: #d4af37;
+        }
+
+        /* ── CONFIRM DELETE OVERLAY ── */
+        .confirm-overlay {
+          position: fixed; inset: 0; z-index: 250;
+          background: rgba(5,5,10,0.8); backdrop-filter: blur(6px);
+          display: flex; align-items: center; justify-content: center; padding: 24px;
+        }
+        .confirm-box {
+          background: #141520; border: 1px solid rgba(239,68,68,0.25);
+          border-radius: 16px; padding: 32px; width: 100%; max-width: 360px;
+          text-align: center;
+          animation: modal-in 0.2s cubic-bezier(.2,.8,.4,1);
+        }
+        .confirm-icon {
+          width: 48px; height: 48px; border-radius: 50%;
+          background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+          display: flex; align-items: center; justify-content: center;
+          margin: 0 auto 16px;
+        }
+        .confirm-icon svg { width: 22px; height: 22px; stroke: #f87171; }
+        .confirm-title { font-size: 16px; font-weight: 600; color: #d0cce8; margin-bottom: 8px; }
+        .confirm-sub { font-size: 13px; color: #3d4258; line-height: 1.6; margin-bottom: 24px; }
+        .confirm-actions { display: flex; gap: 10px; }
+        .btn-confirm-cancel {
+          flex: 1; padding: 10px; border-radius: 9px;
+          background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+          color: #5a6070; font-size: 13px; font-weight: 500;
+          cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        .btn-confirm-cancel:hover { background: rgba(255,255,255,0.09); color: #94a0b8; }
+        .btn-confirm-delete {
+          flex: 1; padding: 10px; border-radius: 9px;
+          background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3);
+          color: #f87171; font-size: 13px; font-weight: 600;
+          cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        .btn-confirm-delete:hover { background: rgba(239,68,68,0.25); color: #fca5a5; }
+
         .tasks-header {
           display: flex; align-items: center; justify-content: space-between;
           margin-bottom: 4px;
@@ -415,6 +555,11 @@ export default function Dashboard() {
           .db-grid { grid-template-columns: 1fr; }
           .db-topbar { padding: 0 18px; }
           .db-body { padding: 28px 16px 60px; }
+          .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+          .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .stat-num { font-size: 1.6rem; }
         }
       `}</style>
 
@@ -449,6 +594,63 @@ export default function Dashboard() {
             <p className="db-page-eyebrow">Workspace</p>
             <h1 className="db-page-title">Task Dashboard</h1>
             <p className="db-page-sub">Manage and track your team's tasks in one place.</p>
+          </div>
+
+          {/* ── Stats Row ── */}
+          <div className="stats-grid">
+            {/* Total */}
+            <div className="stat-card total">
+              <div className="stat-icon">
+                <svg fill="none" stroke="#d4af37" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div className="stat-num">{total}</div>
+              <div className="stat-label">Total Tasks</div>
+            </div>
+
+            {/* Completed */}
+            <div className="stat-card done">
+              <div className="stat-icon">
+                <svg fill="none" stroke="#34d399" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="stat-num">{completed}</div>
+              <div className="stat-label">Completed</div>
+              <div className="stat-bar">
+                <div className="stat-bar-fill" style={{ width: total ? `${(completed/total)*100}%` : '0%' }} />
+              </div>
+            </div>
+
+            {/* Pending */}
+            <div className="stat-card pending">
+              <div className="stat-icon">
+                <svg fill="none" stroke="#94a3b8" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <path strokeLinecap="round" d="M12 6v6l4 2" />
+                </svg>
+              </div>
+              <div className="stat-num">{pending}</div>
+              <div className="stat-label">Pending</div>
+              <div className="stat-bar">
+                <div className="stat-bar-fill" style={{ width: total ? `${(pending/total)*100}%` : '0%' }} />
+              </div>
+            </div>
+
+            {/* In Progress */}
+            <div className="stat-card active">
+              <div className="stat-icon">
+                <svg fill="none" stroke="#818cf8" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div className="stat-num">{inProgress}</div>
+              <div className="stat-label">In Progress</div>
+              <div className="stat-bar">
+                <div className="stat-bar-fill" style={{ width: total ? `${(inProgress/total)*100}%` : '0%' }} />
+              </div>
+            </div>
           </div>
 
           <div className="db-grid">
@@ -565,7 +767,20 @@ export default function Dashboard() {
                   </div>
                   <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span className="db-card-title">All Tasks</span>
-                    <span className="tasks-count">{tasks.length} total</span>
+                    <span className="tasks-count">{filteredTasks.length} / {tasks.length}</span>
+                  </div>
+                </div>
+                {/* Filter bar */}
+                <div style={{ padding: "14px 20px 0" }}>
+                  <div className="filter-bar">
+                    {["All", "Pending", "In Progress", "Completed"].map(f => (
+                      <button
+                        key={f}
+                        className={`filter-pill${activeFilter === f ? " active-pill" : ""}`}
+                        onClick={() => setActiveFilter(f)}
+                        id={`filter-${f.replace(" ","-").toLowerCase()}`}
+                      >{f}</button>
+                    ))}
                   </div>
                 </div>
                 <div className="db-card-body">
@@ -578,16 +793,16 @@ export default function Dashboard() {
                     </div>
                   ) : fetchErr ? (
                     <div className="f-msg err">{fetchErr}</div>
-                  ) : tasks.length === 0 ? (
+                  ) : filteredTasks.length === 0 ? (
                     <div className="task-empty">
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M12 11v4m0 0h.01" />
                       </svg>
-                      No tasks yet. Add your first task →
+                      {tasks.length === 0 ? "No tasks yet. Add your first task →" : `No ${activeFilter} tasks found.`}
                     </div>
                   ) : (
                     <div className="task-list">
-                      {tasks.map((task) => (
+                      {filteredTasks.map((task) => (
                         <div className="task-item" key={task._id}>
                           <div className="task-item-top">
                             <div>
@@ -612,7 +827,7 @@ export default function Dashboard() {
                                 className="btn-icon btn-delete"
                                 title="Delete task"
                                 disabled={deletingId === task._id}
-                                onClick={() => handleDelete(task._id)}
+                                onClick={() => requestDelete(task._id)}
                                 id={`delete-task-${task._id}`}
                               >
                                 {deletingId === task._id ? (
@@ -716,6 +931,28 @@ export default function Dashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Confirm Delete Dialog ── */}
+      {confirmDeleteId && (
+        <div className="confirm-overlay" onClick={(e) => { if (e.target === e.currentTarget) setConfirmDeleteId(null); }}>
+          <div className="confirm-box">
+            <div className="confirm-icon">
+              <svg fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6" strokeLinecap="round" />
+                <path d="M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10 11v6m4-6v6" strokeLinecap="round" />
+                <path d="M9 6V4h6v2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div className="confirm-title">Delete this task?</div>
+            <div className="confirm-sub">This action cannot be undone. The task will be permanently removed.</div>
+            <div className="confirm-actions">
+              <button className="btn-confirm-cancel" onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+              <button id="confirm-delete-btn" className="btn-confirm-delete" onClick={handleDelete}>Yes, Delete</button>
+            </div>
           </div>
         </div>
       )}
