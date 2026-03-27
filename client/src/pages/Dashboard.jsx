@@ -314,7 +314,6 @@ export default function Dashboard() {
         .f-submit:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
         .f-submit:disabled { opacity: 0.45; cursor: not-allowed; }
 
-        /* ── TASK LIST ── */
         /* ── STATS GRID ── */
         .stats-grid {
           display: grid;
@@ -328,9 +327,9 @@ export default function Dashboard() {
           border-radius: 14px;
           padding: 20px 22px;
           position: relative; overflow: hidden;
-          transition: border-color 0.2s, transform 0.2s;
+          transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
         }
-        .stat-card:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); }
+        .stat-card:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
         .stat-card::before {
           content: '';
           position: absolute; top: 0; left: 0; right: 0;
@@ -365,6 +364,10 @@ export default function Dashboard() {
           font-weight: 500; letter-spacing: 0.05em;
           text-transform: uppercase;
         }
+        .stat-pct {
+          font-size: 11px; color: #2a2f42;
+          margin-top: 2px; letter-spacing: 0.03em;
+        }
         .stat-bar {
           margin-top: 14px;
           height: 3px; border-radius: 3px;
@@ -373,11 +376,11 @@ export default function Dashboard() {
         }
         .stat-bar-fill {
           height: 100%; border-radius: 3px;
-          transition: width 0.6s cubic-bezier(.4,0,.2,1);
+          transition: width 0.7s cubic-bezier(.4,0,.2,1);
         }
-        .stat-card.done   .stat-bar-fill { background: #34d399; }
-        .stat-card.pending .stat-bar-fill { background: #94a3b8; }
-        .stat-card.active  .stat-bar-fill { background: #818cf8; }
+        .stat-card.done   .stat-bar-fill { background: linear-gradient(90deg, #34d399, #059669); }
+        .stat-card.pending .stat-bar-fill { background: linear-gradient(90deg, #94a3b8, #64748b); }
+        .stat-card.active  .stat-bar-fill { background: linear-gradient(90deg, #818cf8, #6366f1); }
 
         /* ── FILTER PILLS ── */
         .filter-bar {
@@ -488,6 +491,11 @@ export default function Dashboard() {
         .btn-edit:hover { background: rgba(99,102,241,0.15); color: #a5b4fc; }
         .btn-delete { color: #f87171; }
         .btn-delete:hover { background: rgba(239,68,68,0.15); color: #fca5a5; }
+        .btn-complete { color: #34d399; }
+        .btn-complete:hover { background: rgba(52,211,153,0.15); color: #6ee7b7; }
+        .btn-complete.completed-task { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3); color: #34d399; }
+        .task-item.is-done { opacity: 0.65; }
+        .task-item.is-done .task-title { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.2); }
 
         .task-date { font-size: 11px; color: #2e3348; letter-spacing: 0.02em; }
 
@@ -618,6 +626,7 @@ export default function Dashboard() {
               </div>
               <div className="stat-num">{completed}</div>
               <div className="stat-label">Completed</div>
+              <div className="stat-pct">{total ? Math.round((completed/total)*100) : 0}% done</div>
               <div className="stat-bar">
                 <div className="stat-bar-fill" style={{ width: total ? `${(completed/total)*100}%` : '0%' }} />
               </div>
@@ -633,6 +642,7 @@ export default function Dashboard() {
               </div>
               <div className="stat-num">{pending}</div>
               <div className="stat-label">Pending</div>
+              <div className="stat-pct">{total ? Math.round((pending/total)*100) : 0}% of total</div>
               <div className="stat-bar">
                 <div className="stat-bar-fill" style={{ width: total ? `${(pending/total)*100}%` : '0%' }} />
               </div>
@@ -647,6 +657,7 @@ export default function Dashboard() {
               </div>
               <div className="stat-num">{inProgress}</div>
               <div className="stat-label">In Progress</div>
+              <div className="stat-pct">{total ? Math.round((inProgress/total)*100) : 0}% of total</div>
               <div className="stat-bar">
                 <div className="stat-bar-fill" style={{ width: total ? `${(inProgress/total)*100}%` : '0%' }} />
               </div>
@@ -803,7 +814,7 @@ export default function Dashboard() {
                   ) : (
                     <div className="task-list">
                       {filteredTasks.map((task) => (
-                        <div className="task-item" key={task._id}>
+                        <div className={`task-item${task.status === 'Completed' ? ' is-done' : ''}`} key={task._id}>
                           <div className="task-item-top">
                             <div>
                               <div className="task-title">{task.title}</div>
@@ -812,6 +823,23 @@ export default function Dashboard() {
                               )}
                             </div>
                             <div className="task-actions">
+                              <button
+                                className={`btn-icon btn-complete${task.status === 'Completed' ? ' completed-task' : ''}`}
+                                title={task.status === 'Completed' ? 'Mark as Pending' : 'Mark as Completed'}
+                                onClick={async () => {
+                                  const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
+                                  try {
+                                    await API.put(`/api/tasks/${task._id}`, { ...task, status: newStatus });
+                                    showToast(newStatus === 'Completed' ? 'Task completed ✓' : 'Marked as pending');
+                                    fetchTasks();
+                                  } catch { showToast('Update failed', 'error'); }
+                                }}
+                                id={`complete-task-${task._id}`}
+                              >
+                                <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              </button>
                               <button
                                 className="btn-icon btn-edit"
                                 title="Edit task"

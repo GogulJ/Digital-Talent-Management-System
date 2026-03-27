@@ -414,7 +414,7 @@ function Login() {
             </p>
           </div>
 
-          <p className="left-footnote">© 2025 Talent Management System Inc. — All rights reserved</p>
+          <p className="left-footnote">© 2026 Talent Management System Inc. — All rights reserved</p>
         </div>
 
         {/* Right panel */}
