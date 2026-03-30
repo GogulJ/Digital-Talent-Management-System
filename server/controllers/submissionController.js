@@ -1,0 +1,69 @@
+const Submission = require("../models/Submission");
+
+// @route   POST /api/submissions/submit-task
+// @desc    Submit a task
+// @access  Private
+const submitTask = async (req, res) => {
+  try {
+    const { taskId, submissionLink } = req.body;
+    const userId = req.user.id;
+
+    if (!taskId || !submissionLink) {
+      return res
+        .status(400)
+        .json({ msg: "taskId and submissionLink are required" });
+    }
+
+    const submission = new Submission({
+      taskId,
+      userId,
+      submissionLink,
+      status: "Submitted", // default status
+    });
+
+    await submission.save();
+
+    res.status(201).json({
+      msg: "Task submitted successfully ✅",
+      submission,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
+// @route   GET /api/submissions
+// @desc    Get all submissions (admin/manager use)
+// @access  Private
+const getSubmissions = async (req, res) => {
+  try {
+    const submissions = await Submission.find()
+      .populate("taskId", "title description")
+      .populate("userId", "name email")
+      .sort({ submittedAt: -1 });
+
+    res.status(200).json(submissions);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
+// @route   GET /api/submissions/my
+// @desc    Get submissions of the logged-in user
+// @access  Private
+const getMySubmissions = async (req, res) => {
+  try {
+    const submissions = await Submission.find({ userId: req.user.id })
+      .populate("taskId", "title description dueDate")
+      .sort({ submittedAt: -1 });
+
+    res.status(200).json(submissions);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
+module.exports = { submitTask, getSubmissions, getMySubmissions };

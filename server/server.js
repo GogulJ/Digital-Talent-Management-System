@@ -22,6 +22,9 @@ app.use("/api/auth", authRoutes);
 const taskRoutes = require("./routes/taskRoutes");
 app.use("/api/tasks", taskRoutes);
 
+const submissionRoutes = require("./routes/submissionRoutes");
+app.use("/api/submissions", submissionRoutes);
+
 // Protected Route
 const authMiddleware = require("./middleware/authMiddleware");
 app.get("/api/protected", authMiddleware, (req, res) => {
