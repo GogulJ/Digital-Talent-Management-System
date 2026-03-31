@@ -66,4 +66,26 @@ const getMySubmissions = async (req, res) => {
   }
 };
 
-module.exports = { submitTask, getSubmissions, getMySubmissions };
+// @route   GET /api/submissions/:userId
+// @desc    Get all submissions by a specific user (admin/manager view)
+// @access  Private
+const getSubmissionsByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const submissions = await Submission.find({ userId })
+      .populate("taskId", "title description dueDate status")
+      .populate("userId", "name email")
+      .sort({ submittedAt: -1 });
+
+    res.status(200).json({
+      count: submissions.length,
+      submissions,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
+module.exports = { submitTask, getSubmissions, getMySubmissions, getSubmissionsByUser };

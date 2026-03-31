@@ -14,6 +14,23 @@ exports.createTask = async (req, res) => {
   }
 };
 
+// GET TASKS ASSIGNED TO LOGGED-IN USER
+exports.getUserTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ assignedTo: req.user.id })
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      count: tasks.length,
+      tasks,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch user tasks", error: err.message });
+  }
+};
+
 // GET ALL TASKS
 exports.getAllTasks = async (req, res) => {
   try {
