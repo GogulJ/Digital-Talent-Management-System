@@ -592,6 +592,14 @@ export default function Dashboard() {
                 <span className="db-user-name">{user.name || user.email}</span>
               </div>
             )}
+            <button
+              id="review-submissions-btn"
+              className="db-logout-btn"
+              style={{ background:"rgba(96,165,250,0.1)", borderColor:"rgba(96,165,250,0.25)", color:"#60a5fa" }}
+              onClick={() => navigate("/admin/submissions")}
+            >
+              Review Submissions
+            </button>
             <button id="logout-btn" className="db-logout-btn" onClick={handleLogout}>Logout</button>
           </div>
         </div>

@@ -88,4 +88,47 @@ const getSubmissionsByUser = async (req, res) => {
   }
 };
 
-module.exports = { submitTask, getSubmissions, getMySubmissions, getSubmissionsByUser };
+// @route   PUT /api/submissions/update-status
+// @desc    Update submission status (Admin: Approve / Reject / Reviewed)
+// @access  Private
+const updateSubmissionStatus = async (req, res) => {
+  try {
+    const { submissionId, status } = req.body;
+
+    const ALLOWED = ["Submitted", "Reviewed", "Approved", "Rejected"];
+    if (!submissionId || !status) {
+      return res.status(400).json({ msg: "submissionId and status are required" });
+    }
+    if (!ALLOWED.includes(status)) {
+      return res.status(400).json({ msg: `status must be one of: ${ALLOWED.join(", ")}` });
+    }
+
+    const submission = await Submission.findByIdAndUpdate(
+      submissionId,
+      { status },
+      { new: true }
+    )
+      .populate("taskId", "title description")
+      .populate("userId", "name email");
+
+    if (!submission) {
+      return res.status(404).json({ msg: "Submission not found" });
+    }
+
+    res.status(200).json({
+      msg: `Submission ${status} successfully ✅`,
+      submission,
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
+module.exports = {
+  submitTask,
+  getSubmissions,
+  getMySubmissions,
+  getSubmissionsByUser,
+  updateSubmissionStatus,
+};
